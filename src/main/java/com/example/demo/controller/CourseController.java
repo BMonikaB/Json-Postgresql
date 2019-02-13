@@ -6,7 +6,9 @@ import java.util.List;
 import com.example.demo.domain.CourseDTO;
 import com.example.demo.exception.WrongIdException;
 import com.example.demo.persistence.model.Course;
-import com.example.demo.persistence.model.CourseRepo;
+import com.example.demo.persistence.repository.CourseRepo;
+import com.example.demo.service.BaseService;
+import com.example.demo.service.CourseService;
 import com.example.demo.service.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,56 +20,57 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/course")
 public class CourseController {
 
+    private List<CourseDTO> cours = new ArrayList<>();
+
     @Autowired
-    CourseRepo courseRepo;
+    CourseService courseService;
 
-
-    private List<CourseDTO> courseList = new ArrayList<>();
-
-    @PostMapping(value = "/create")
-    public ResponseEntity<CourseDTO> createCurser(@RequestBody CourseDTO course) {
-
-        if (course.getId() == null || course.getId() < 0)
-            throw new WrongIdException("Id jest mniejsze od 0 lub równa się null");
-
-        courseList.add(course);
-        return new ResponseEntity<>(course, HttpStatus.CREATED);
+    @RequestMapping(value = "/create", method = RequestMethod.POST)
+    public ResponseEntity<CourseDTO> createCourse(@RequestBody CourseDTO courseDTO) {
+        if (courseDTO.getId() != null)
+            throw new WrongIdException("Tworzony kurs nie powinien posiadać ID.");
+        System.out.println("/course/create" + courseDTO.getName());
+        CourseDTO dto = courseService.createCourse(courseDTO);
+        return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "/avaliable")
-    public ResponseEntity<List<CourseDTO>> getAvaliable() {
-        return new ResponseEntity<>(courseList, HttpStatus.OK);
+    @RequestMapping(value = "/available", method = RequestMethod.GET)
+    public ResponseEntity<List<CourseDTO>> getAvailableCourses() {
+        return new ResponseEntity<>(courseService.getAllCourses(), HttpStatus.OK);
     }
 
-    @GetMapping(value = "/buy1/{id}")
-    public CourseDTO buy1(@PathVariable(value = "id") Long id) {
-        System.out.println("Buy course");
-        Course c = courseRepo.getOne(id);
-        return Mapper.courseToDTO(c);
+    @RequestMapping(value = "buy/{id}", method = RequestMethod.GET)
+    public CourseDTO buyCourse(@PathVariable(value = "id") Long id) {
+        System.out.println("buyCourse");
+//        Course course = new Course();
+//        course.setName("ccc1");
+//        courseService.save(course);
+        //return courseService.getCourseDtoById(id);
+        return null;
     }
 
-    @PostMapping("/buy2")
-    public CourseDTO buy2(@RequestParam("id") Long id) {
-        System.out.println("Buy course");
+    @RequestMapping(value = "buy2", method = RequestMethod.POST)
+    public CourseDTO buyCourse2(@RequestParam(value = "id") Long id) {
+        System.out.println("buyCourse2");
         return getCourse(id);
     }
 
-
     private CourseDTO getCourse(Long id) {
-        System.out.println("Buy course");
-        CourseDTO course = null;
-
-
-        for (CourseDTO c : courseList) {
-            if (c.getId().equals(id)) {
-                course = c;
+        CourseDTO courseDTO = null;
+        for (CourseDTO c : cours) {
+            if (c.getId() != null && c.getId().equals(id)) {
+                courseDTO = c;
+                break;
             }
-
-
         }
-
-        return course;
+        if (courseDTO == null) {
+            // TODO
+        }
+        return courseDTO;
     }
 
-
+//    @RequestMapping(value = "/bought", method = RequestMethod.GET) FIXME
+//    public ResponseEntity<List<CourseDTO>> getBoughtCourses() {
+//        return new ResponseEntity<>(cours, HttpStatus.OK);
+//    }
 }

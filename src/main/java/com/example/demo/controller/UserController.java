@@ -1,6 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.domain.UserDTO;
+import com.example.demo.exception.WrongIdException;
+import com.example.demo.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,26 +11,37 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/user")
 public class UserController {
 
+    @Autowired
+    private UserService userService;
 
     @ResponseStatus(value = HttpStatus.CREATED)
-    @PostMapping(value = "/registry")
-    public UserDTO registry(@RequestBody UserDTO user) {
-        return user;
+    @RequestMapping(value = "/registry", method = RequestMethod.POST)
+    public UserDTO registry(@RequestBody UserDTO userDTO){
+        if(idExist(userDTO))
+            throw new WrongIdException("Tworzony użytkownik nie powinien posiadać ID.");
+        return userService.createUser(userDTO);
     }
 
-    @PutMapping(value = "/edit")
-    public UserDTO edit(@RequestBody UserDTO user) {
-        return user;
+    @RequestMapping(value = "/edit", method = RequestMethod.PUT)
+    public UserDTO edit(@RequestBody UserDTO userDTO){
+        if(!idExist(userDTO))
+            throw new WrongIdException("Edytowany użytkownik musi posiadać ID.");
+        return userService.editUser(userDTO);
     }
 
-    @PutMapping(value = "confirm/{id}")
-    public UserDTO confirm(@PathVariable("id") Long id) {
+    @RequestMapping(value = "/confirm/{id}", method = RequestMethod.PUT)
+    public UserDTO confirm(@PathVariable(value = "id") Long id){
         return new UserDTO();
     }
 
-    @PutMapping(value = "/add")
-    public UserDTO add(@RequestBody UserDTO user) {
-        return user;
+    @RequestMapping(value = "/add", method = RequestMethod.PUT)
+    public UserDTO add(@RequestBody UserDTO userDTO){
+        if(idExist(userDTO))
+            throw new WrongIdException("Tworzony użytkownik nie powinien posiadać ID.");
+        return userService.createUser(userDTO);
     }
 
+    private boolean idExist(UserDTO userDTO) {
+        return userDTO.getId() != null;
+    }
 }
